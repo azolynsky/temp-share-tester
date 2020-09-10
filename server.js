@@ -1,25 +1,26 @@
-const { createServer } = require('http')
-const next = require('next')
+const express = require("express");
+const path = require("path");
+const fs = require("fs");
 
-const port = process.env.PORT || 3000;
-const dev = process.env.NODE_ENV !== 'production'
-const app = next({ dev })
-const handle = app.getRequestHandler()
+const app = express();
+app.use(express.static(path.join(__dirname, "build")));
 
-app.prepare().then(() => {
-  createServer((req, res) => {
-    const parsedUrl = new URL(req.url, 'http://w.w')
-    const { pathname, query } = parsedUrl
+app.get("/ping", function (req, res) {
+  return res.send("pong");
+});
 
-    if (pathname === '/a') {
-      app.render(req, res, '/a', query)
-    } else if (pathname === '/b') {
-      app.render(req, res, '/b', query)
-    } else {
-      handle(req, res, parsedUrl)
-    }
-  }).listen(port, (err) => {
-    if (err) throw err
-    console.log(`> Ready on http://localhost:${port}`)
-  })
-})
+// Replace this with the share endpoint. This will do a find-and-replace before serving.
+app.get("/locker", function (req, res) {
+  fs.readFile(path.join(__dirname, "build", "index.html"), (err, data) => {
+    if (err) throw err;
+
+    res.send(data.toString().replace("KindKatch", "Whatever I Want"));
+  });
+});
+
+// This will catch and serve up any other endpoints
+app.get("*", function (req, res) {
+  res.sendFile(path.join(__dirname, "build", "index.html"));
+});
+
+app.listen(process.env.PORT || 8080);
